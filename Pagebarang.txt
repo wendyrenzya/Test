@@ -1,0 +1,29 @@
+PAGE: BARANG
+
+Fitur:
+- List barang
+- Cari barang
+- Tambah barang
+- Edit barang
+- Hapus barang (Owner saja)
+- Pilih foto dari internet (auto-fetch gambar)
+- Upload foto manual via URL
+
+Field Barang:
+id, nama, harga, harga_modal, stock, kategori, foto, deskripsi, created_by, updated_by
+
+Auto Fetch Gambar:
+- Ketik nama barang → tombol “Cari Gambar”
+- Sistem fetch 3–5 gambar
+- User pilih salah satu → url terisi otomatis
+
+API:
+GET /barang
+POST /barang/add
+POST /barang/update
+POST /barang/delete
+POST /barang/fetch-image  (ambil gambar otomatis)
+
+Role Logic:
+- Mekanik tidak bisa edit/hapus/tambah
+- Admin & Owner bisa semиa
