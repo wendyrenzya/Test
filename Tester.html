@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BMT API Tester</title>
+<style>
+body {
+  font-family: Arial, sans-serif;
+  padding: 15px;
+  background: #f2f2f2;
+}
+.card {
+  background: #fff;
+  padding: 15px;
+  margin-bottom: 15px;
+  border-radius: 10px;
+  box-shadow: 0 0 5px #ccc;
+}
+input, button, select {
+  width: 100%;
+  padding: 10px;
+  margin-top: 8px;
+  border-radius: 8px;
+  border: 1px solid #bbb;
+}
+button {
+  background: #007bff;
+  color: #fff;
+  border: none;
+}
+#log {
+  white-space: pre-wrap;
+  background: #000;
+  color: #0f0;
+  padding: 10px;
+  border-radius: 6px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+img {
+  max-width: 100%;
+  margin-top: 10px;
+  border-radius: 6px;
+}
+</style>
+</head>
+<body>
+
+<h2>BMT API Tester</h2>
+
+<div class="card">
+  <h3>1. Login</h3>
+  <input id="loginUser" placeholder="username (tanpa @bigmotor.biz.id)">
+  <input id="loginPass" type="password" placeholder="password">
+  <button onclick="doLogin()">Login</button>
+  <div id="loginResult"></div>
+</div>
+
+<div class="card">
+  <h3>2. Fetch Barang</h3>
+  <button onclick="fetchBarang()">GET /barang</button>
+  <div id="barangResult"></div>
+</div>
+
+<div class="card">
+  <h3>3. Upload Image (imgbb)</h3>
+  <input type="file" id="uploadFile">
+  <button onclick="uploadImage()">Upload</button>
+  <div id="uploadResult"></div>
+  <img id="previewImg" style="display:none;">
+</div>
+
+<div class="card">
+  <h3>Log</h3>
+  <div id="log"></div>
+</div>
+
+<script>
+const API = "https://api.bigmotor.biz.id";
+let TOKEN = null;
+
+// Helper for logs
+function log(txt) {
+  const el = document.getElementById("log");
+  el.textContent += txt + "\n";
+  el.scrollTop = el.scrollHeight;
+}
+
+// 1. LOGIN
+async function doLogin() {
+  const u = document.getElementById("loginUser").value.trim();
+  const p = document.getElementById("loginPass").value;
+  document.getElementById("loginResult").innerHTML = "Loading...";
+
+  const username = u + "@bigmotor.biz.id";
+
+  try {
+    const res = await fetch(API + "/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, password: p })
+    });
+
+    const j = await res.json();
+    log("LOGIN RESPONSE: " + JSON.stringify(j));
+
+    if (j.ok) {
+      TOKEN = j.token;
+      document.getElementById("loginResult").innerHTML = 
+        "<span style='color:green'>Success</span>";
+    } else {
+      document.getElementById("loginResult").innerHTML = 
+        "<span style='color:red'>Failed: " + j.error + "</span>";
+    }
+  } catch (e) {
+    log("LOGIN ERROR: " + e.toString());
+  }
+}
+
+// 2. FETCH BARANG
+async function fetchBarang() {
+  document.getElementById("barangResult").innerHTML = "Loading...";
+  try {
+    const res = await fetch(API + "/barang");
+    const j = await res.json();
+    log("BARANG RESPONSE: " + JSON.stringify(j));
+
+    if (j.ok) {
+      let html = "<b>Total:</b> " + j.data.length + "<br><br>";
+      j.data.forEach(x => {
+        html += `ID ${x.id} - ${x.nama} (stok ${x.stock})<br>`;
+      });
+      document.getElementById("barangResult").innerHTML = html;
+    } else {
+      document.getElementById("barangResult").innerHTML = 
+        "<span style='color:red'>Failed</span>";
+    }
+  } catch (e) {
+    log("BARANG ERROR: " + e.toString());
+  }
+}
+
+// 3. UPLOAD IMAGE
+async function uploadImage() {
+  const file = document.getElementById("uploadFile").files[0];
+  if (!file) {
+    alert("Select image first");
+    return;
+  }
+  document.getElementById("uploadResult").innerHTML = "Uploading...";
+
+  const form = new FormData();
+  form.append("file", file);
+
+  try {
+    const res = await fetch(API + "/upload", {
+      method: "POST",
+      body: form
+    });
+
+    const j = await res.json();
+    log("UPLOAD RESPONSE: " + JSON.stringify(j));
+
+    if (j.ok) {
+      document.getElementById("uploadResult").innerHTML =
+        "<span style='color:green'>Uploaded!</span><br>" + j.url;
+
+      // show image
+      const img = document.getElementById("previewImg");
+      img.style.display = "block";
+      img.src = j.url;
+    } else {
+      document.getElementById("uploadResult").innerHTML =
+        "<span style='color:red'>Failed: " + j.error + "</span>";
+    }
+  } catch (e) {
+    log("UPLOAD ERROR: " + e.toString());
+  }
+}
+</script>
+
+</body>
+</html>
