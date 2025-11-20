@@ -1,0 +1,16 @@
+<!-- RIWAYAT -->
+<h2>Riwayat</h2>
+<div id="riwayatList"></div>
+
+<style>
+#riwayatList .item{
+  display:flex;align-items:center;background:#fff;margin:10px;
+  border-radius:10px;padding:10px;box-shadow:0 2px 3px rgba(0,0,0,.1);
+}
+#riwayatList .avatar{
+  width:45px;height:45px;border-radius:50%;object-fit:cover;margin-right:12px;
+}
+#riwayatList .info{
+  font-size:14px;
+}
+</style>
