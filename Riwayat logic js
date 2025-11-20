@@ -1,0 +1,31 @@
+const API = "https://api.bigmotor.biz.id";
+
+window.onload = loadRiwayat;
+
+async function loadRiwayat() {
+  const res = await fetch(API + "/riwayat");
+  const json = await res.json();
+
+  console.log("RIWAYAT:", json);
+
+  if (!json.ok) return;
+
+  const box = document.getElementById("riwayatList");
+  box.innerHTML = "";
+
+  json.results.forEach(r => {
+    const avatar = r.photo_url || "https://i.ibb.co/QM0q2pX/user.png";
+
+    box.innerHTML += `
+      <div class="item">
+        <img src="${avatar}" class="avatar">
+        <div class="info">
+          <strong>${r.tipe}</strong><br>
+          ${r.barang_nama} (${r.jumlah})<br>
+          Oleh: ${r.dibuat_oleh}<br>
+          <small>${r.created_at}</small>
+        </div>
+      </div>
+    `;
+  });
+}
