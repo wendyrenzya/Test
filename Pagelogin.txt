@@ -1,0 +1,33 @@
+PAGE: LOGIN
+
+Tujuan:
+- Autentikasi user ke sistem
+- Menyimpan username@bigmotor.biz.id
+- Redirect ke beranda sesuai role
+
+Field:
+- username (tanpa @bigmotor.biz.id)
+- password
+
+UI:
+- Input username
+- Input password
+- Tombol "Login"
+- Pesan error jika gagal
+
+Flow:
+1. User memasukkan username + password
+2. Sistem kirim POST /login
+3. Jika sukses → simpan session (localStorage)
+4. Redirect ke /beranda
+
+API yang digunakan:
+POST /login
+Body:
+{
+  "username": "mekanik1@bigmotor.biz.id",
+  "password": "123"
+}
+
+Response:
+{ ok: true, user: { username, name, role, photo_url } }
