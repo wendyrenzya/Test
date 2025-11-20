@@ -1,0 +1,44 @@
+PAGE: BERANDA (Dashboard)
+
+Elemen UI:
+- Greeting (menampilkan nama user)
+- Custom message bengkel (editable oleh Owner/Admin)
+- Sticky message bengkel
+- Floating welcome image (jika ada, tampil sekali login)
+- Grid menu:
+   • Barang
+   • Stok Masuk
+   • Penjualan
+   • Riwayat
+   • More
+   • (Pengaturan di bottom-nav, bukan grid)
+
+Custom Message:
+- Karakter terbatas
+- Jika penuh → warna merah
+
+Sticky Message:
+- Karakter lebih panjang
+- Ditampilkan di bawah grid
+
+Floating Image:
+- Tampil hanya di login pertama
+- Ada tombol X untuk menutup
+- Gambar di-resize otomatis max width
+
+API:
+GET /messages
+Response:
+{
+  custom_message,
+  sticky_message,
+  welcome_image_url,
+  updated_by,
+  updated_at
+}
+
+POST /messages/update (role: Owner, Admin)
+Fields:
+- custom_message
+- sticky_message
+- welcome_image_url (opsional)
