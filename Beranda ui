@@ -1,0 +1,56 @@
+<!-- DASHBOARD -->
+<div class="header">
+  <div class="top-info">
+    <span id="greeting">Selamat datang...</span>
+    <span id="clock"></span>
+  </div>
+</div>
+
+<div class="custom-message-box" id="customMessageBox">
+  <p id="customMessage"></p>
+</div>
+
+<div class="grid-menu">
+  <div class="menu-item" data-page="barang">Barang</div>
+  <div class="menu-item" data-page="stok_masuk">Stok Masuk</div>
+  <div class="menu-item" data-page="penjualan">Penjualan</div>
+  <div class="menu-item" data-page="riwayat">Riwayat</div>
+  <div class="menu-item" data-page="more">More</div>
+</div>
+
+<div class="sticky-box" id="stickyMessageBox">
+  <p id="stickyMessage"></p>
+</div>
+
+<!-- Floating Welcome Image -->
+<div id="floatingImageContainer" class="floating-hide">
+  <img id="floatingImage" />
+  <button id="closeFloating">X</button>
+</div>
+
+<style>
+.header{padding:15px;}
+.top-info{display:flex;justify-content:space-between;}
+.grid-menu{
+  display:grid;grid-template-columns:repeat(3,1fr);
+  gap:12px;padding:20px;
+}
+.menu-item{
+  background:#fff;padding:18px;text-align:center;
+  border-radius:10px;box-shadow:0 2px 4px rgba(0,0,0,0.1);
+}
+.custom-message-box,.sticky-box{
+  margin:12px;padding:14px;background:#fff;border-radius:8px;
+}
+.floating-hide{display:none;}
+#floatingImageContainer{
+  position:fixed;top:20px;left:50%;transform:translateX(-50%);
+  max-width:90%;background:#000000aa;padding:10px;
+  border-radius:10px;z-index:9999;
+}
+#floatingImage{width:100%;border-radius:8px;}
+#closeFloating{
+  position:absolute;top:6px;right:6px;background:red;color:white;
+  border:none;border-radius:50%;width:28px;height:28px;
+}
+</style>
