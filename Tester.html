@@ -1,183 +1,148 @@
-<!DOCTYPE html>
-<html lang="en">
+<!-- ========================
+     File: tester.html
+     Place: project root (open in phone browser for local testing)
+     Purpose: mobile-friendly tester UI for /login, /barang, /upload
+     Edit: set API_BASE to your deployed URL if different
+     ======================== -->
+<!doctype html>
+<html lang="id">
 <head>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>BMT API Tester</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Tester BMT - v1</title>
 <style>
-body {
-  font-family: Arial, sans-serif;
-  padding: 15px;
-  background: #f2f2f2;
-}
-.card {
-  background: #fff;
-  padding: 15px;
-  margin-bottom: 15px;
-  border-radius: 10px;
-  box-shadow: 0 0 5px #ccc;
-}
-input, button, select {
-  width: 100%;
-  padding: 10px;
-  margin-top: 8px;
-  border-radius: 8px;
-  border: 1px solid #bbb;
-}
-button {
-  background: #007bff;
-  color: #fff;
-  border: none;
-}
-#log {
-  white-space: pre-wrap;
-  background: #000;
-  color: #0f0;
-  padding: 10px;
-  border-radius: 6px;
-  max-height: 300px;
-  overflow-y: auto;
-}
-img {
-  max-width: 100%;
-  margin-top: 10px;
-  border-radius: 6px;
-}
+  :root { font-family: system-ui, -apple-system, Roboto, "Segoe UI", Arial; }
+  body { margin:0; padding:12px; background:#f6f7fb; color:#111; }
+  .card { background:#fff; border-radius:12px; padding:12px; box-shadow:0 6px 18px rgba(10,10,20,0.06); margin-bottom:12px; }
+  h1{font-size:18px;margin:0 0 8px}
+  label{display:block;font-size:12px;margin:8px 0 4px;color:#555}
+  input[type=text], input[type=password], textarea { width:100%; padding:10px; border:1px solid #eee; border-radius:8px; box-sizing:border-box; }
+  button { background:#0b63ff;color:#fff;border:none;padding:10px 12px;border-radius:8px;font-weight:600; }
+  .small { font-size:13px;color:#666 }
+  .row { display:flex; gap:8px; }
+  .flex { flex:1 }
+  .resp { font-family: monospace; font-size:12px; white-space:pre-wrap; background:#f3f6ff; padding:8px; border-radius:8px; margin-top:8px; }
+  .status { padding:6px;border-radius:8px;font-weight:700; display:inline-block }
+  .ok { background:#e7f9ee;color:#0b6f2b }
+  .err { background:#fdecea;color:#8b1c1c }
+  .hint { font-size:12px;color:#888;margin-top:6px }
+  .filebox { border:1px dashed #ddd; padding:10px; border-radius:8px; text-align:center; background:#fff;}
+  footer { text-align:center; font-size:12px; color:#888; margin-top:8px; }
+  @media (min-width:420px){ body{padding:20px} .card{padding:16px} }
 </style>
 </head>
 <body>
+  <div class="card">
+    <h1>Tester BMT v1</h1>
+    <div class="small">API base: <span id="apiBaseText"></span></div>
+    <div class="hint">Set API_BASE in the script below if needed.</div>
+  </div>
 
-<h2>BMT API Tester</h2>
+  <div class="card">
+    <h2>1) Login</h2>
+    <label>Username</label>
+    <input id="loginUser" type="text" value="owner@bigmotor.biz.id" />
+    <label>Password</label>
+    <input id="loginPass" type="password" value="password" />
+    <div style="margin-top:8px" class="row">
+      <button id="btnLogin" class="flex">Login</button>
+      <div id="loginStatus" style="align-self:center;margin-left:6px"></div>
+    </div>
+    <div id="loginResp" class="resp"></div>
+  </div>
 
-<div class="card">
-  <h3>1. Login</h3>
-  <input id="loginUser" placeholder="username (tanpa @bigmotor.biz.id)">
-  <input id="loginPass" type="password" placeholder="password">
-  <button onclick="doLogin()">Login</button>
-  <div id="loginResult"></div>
-</div>
+  <div class="card">
+    <h2>2) List Barang</h2>
+    <div style="margin-bottom:8px">
+      <button id="btnList" style="width:100%">Fetch Barang</button>
+      <div id="listStatus" style="margin-top:8px"></div>
+    </div>
+    <div id="listResp" class="resp"></div>
+  </div>
 
-<div class="card">
-  <h3>2. Fetch Barang</h3>
-  <button onclick="fetchBarang()">GET /barang</button>
-  <div id="barangResult"></div>
-</div>
+  <div class="card">
+    <h2>3) Upload Image (imgbb)</h2>
+    <div class="filebox">
+      <input id="fileInput" type="file" accept="image/*" />
+    </div>
+    <div style="margin-top:8px" class="row">
+      <button id="btnUpload" class="flex">Upload</button>
+      <div id="uploadStatus" style="align-self:center;margin-left:6px"></div>
+    </div>
+    <div id="uploadResp" class="resp"></div>
+  </div>
 
-<div class="card">
-  <h3>3. Upload Image (imgbb)</h3>
-  <input type="file" id="uploadFile">
-  <button onclick="uploadImage()">Upload</button>
-  <div id="uploadResult"></div>
-  <img id="previewImg" style="display:none;">
-</div>
-
-<div class="card">
-  <h3>Log</h3>
-  <div id="log"></div>
-</div>
+  <footer>Tester v1 — keep SNAPSHOT_MASTER_v1.txt safe. Use mobile for best view.</footer>
 
 <script>
-const API = "https://api.bigmotor.biz.id";
-let TOKEN = null;
+/* EDIT THIS if your deployed API is elsewhere */
+const API_BASE = (location.origin.indexOf('file:') === 0) ? 'https://api.bigmotor.biz.id' : location.origin; 
+// If testing locally open tester.html via file://, set API_BASE manually to your deployed URL:
+// const API_BASE = 'https://api.bigmotor.biz.id';
 
-// Helper for logs
-function log(txt) {
-  const el = document.getElementById("log");
-  el.textContent += txt + "\n";
-  el.scrollTop = el.scrollHeight;
-}
+document.getElementById('apiBaseText').innerText = API_BASE;
 
-// 1. LOGIN
-async function doLogin() {
-  const u = document.getElementById("loginUser").value.trim();
-  const p = document.getElementById("loginPass").value;
-  document.getElementById("loginResult").innerHTML = "Loading...";
+// util
+const el = id => document.getElementById(id);
+const show = (id, msg, ok=true) => {
+  const node = el(id);
+  node.innerHTML = `<span class="status ${ok? 'ok':'err'}">${ok? 'OK':'ERR'}</span> ${msg || ''}`;
+};
 
-  const username = u + "@bigmotor.biz.id";
-
+// login
+el('btnLogin').addEventListener('click', async ()=>{
+  show('loginStatus', 'Requesting...', true);
+  el('loginResp').innerText = '';
   try {
-    const res = await fetch(API + "/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username, password: p })
+    const u = el('loginUser').value.trim();
+    const p = el('loginPass').value;
+    const res = await fetch(API_BASE + '/login', {
+      method:'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ username: u, password: p })
     });
-
-    const j = await res.json();
-    log("LOGIN RESPONSE: " + JSON.stringify(j));
-
-    if (j.ok) {
-      TOKEN = j.token;
-      document.getElementById("loginResult").innerHTML = 
-        "<span style='color:green'>Success</span>";
-    } else {
-      document.getElementById("loginResult").innerHTML = 
-        "<span style='color:red'>Failed: " + j.error + "</span>";
-    }
-  } catch (e) {
-    log("LOGIN ERROR: " + e.toString());
+    const j = await res.json().catch(()=>({ok:false,error:'invalid json'}));
+    if (!res.ok) { show('loginStatus', `HTTP ${res.status}`, false) } else { show('loginStatus','HTTP '+res.status, true) }
+    el('loginResp').innerText = JSON.stringify(j, null, 2);
+  } catch (err) {
+    show('loginStatus','Network error', false);
+    el('loginResp').innerText = String(err);
   }
-}
+});
 
-// 2. FETCH BARANG
-async function fetchBarang() {
-  document.getElementById("barangResult").innerHTML = "Loading...";
+// list barang
+el('btnList').addEventListener('click', async ()=>{
+  show('listStatus','Requesting...', true);
+  el('listResp').innerText = '';
   try {
-    const res = await fetch(API + "/barang");
-    const j = await res.json();
-    log("BARANG RESPONSE: " + JSON.stringify(j));
-
-    if (j.ok) {
-      let html = "<b>Total:</b> " + j.data.length + "<br><br>";
-      j.data.forEach(x => {
-        html += `ID ${x.id} - ${x.nama} (stok ${x.stock})<br>`;
-      });
-      document.getElementById("barangResult").innerHTML = html;
-    } else {
-      document.getElementById("barangResult").innerHTML = 
-        "<span style='color:red'>Failed</span>";
-    }
-  } catch (e) {
-    log("BARANG ERROR: " + e.toString());
+    const res = await fetch(API_BASE + '/barang', { method:'GET' });
+    const j = await res.json().catch(()=>({ok:false,error:'invalid json'}));
+    if (!res.ok) { show('listStatus', `HTTP ${res.status}`, false) } else { show('listStatus','HTTP '+res.status, true) }
+    el('listResp').innerText = JSON.stringify(j, null, 2);
+  } catch (err) {
+    show('listStatus','Network error', false);
+    el('listResp').innerText = String(err);
   }
-}
+});
 
-// 3. UPLOAD IMAGE
-async function uploadImage() {
-  const file = document.getElementById("uploadFile").files[0];
-  if (!file) {
-    alert("Select image first");
-    return;
-  }
-  document.getElementById("uploadResult").innerHTML = "Uploading...";
-
-  const form = new FormData();
-  form.append("file", file);
-
+// upload
+el('btnUpload').addEventListener('click', async ()=>{
+  show('uploadStatus','Uploading...', true);
+  el('uploadResp').innerText = '';
+  const f = el('fileInput').files[0];
+  if (!f) { show('uploadStatus','No file selected', false); return; }
   try {
-    const res = await fetch(API + "/upload", {
-      method: "POST",
-      body: form
-    });
-
-    const j = await res.json();
-    log("UPLOAD RESPONSE: " + JSON.stringify(j));
-
-    if (j.ok) {
-      document.getElementById("uploadResult").innerHTML =
-        "<span style='color:green'>Uploaded!</span><br>" + j.url;
-
-      // show image
-      const img = document.getElementById("previewImg");
-      img.style.display = "block";
-      img.src = j.url;
-    } else {
-      document.getElementById("uploadResult").innerHTML =
-        "<span style='color:red'>Failed: " + j.error + "</span>";
-    }
-  } catch (e) {
-    log("UPLOAD ERROR: " + e.toString());
+    const fd = new FormData();
+    fd.append('file', f);
+    const res = await fetch(API_BASE + '/upload', { method:'POST', body: fd });
+    const j = await res.json().catch(()=>({ok:false,error:'invalid json'}));
+    if (!res.ok) { show('uploadStatus', `HTTP ${res.status}`, false) } else { show('uploadStatus','HTTP '+res.status, true) }
+    el('uploadResp').innerText = JSON.stringify(j, null, 2);
+  } catch (err) {
+    show('uploadStatus','Network error', false);
+    el('uploadResp').innerText = String(err);
   }
-}
+});
 </script>
-
 </body>
 </html>
