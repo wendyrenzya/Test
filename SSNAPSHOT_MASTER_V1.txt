@@ -1,0 +1,81 @@
+========================
+File: SNAPSHOT_MASTER_v1.txt
+Place: project root
+Purpose: authoritative snapshot — upload this at start of each new chat session.
+========================
+Project: Big Motor Tingkulu — MASTER SNAPSHOT v1
+Date: 2025-11-20
+
+--- BACKBONE (PERMANEN) ---
+Worker name: bmt-api-worker
+API base domain (planned): https://api.bigmotor.biz.id
+GitHub repo: (your repo) bmt-api-worker
+Worker file: worker.js (root)
+wrangler.toml: wrangler.toml (root)
+
+D1 Database:
+- binding name: BMT_DB
+- database name: bmt_db
+- database_id: 969fef5e-d7a3-4f58-979b-dbef1f085580
+
+Env variables (backbone names — stored as CF secrets/vars):
+- IMG_BB_KEY  (imgbb API key)  — keep secret; set on Cloudflare dashboard
+
+Naming contract:
+- Worker: bmt-api-worker (exact)
+- DB binding: BMT_DB (exact)
+- Routes lowercase: /login, /barang, /upload
+- worker file: worker.js (exact, root)
+
+DB Schema (expected minimal):
+1) users
+  - id INTEGER PRIMARY KEY
+  - username TEXT UNIQUE
+  - password TEXT
+  - name TEXT
+  - role TEXT
+  - photo_url TEXT
+  - created_at DATETIME
+
+2) barang
+  - id INTEGER PRIMARY KEY
+  - nama TEXT
+  - harga REAL
+  - harga_modal REAL
+  - stock INTEGER
+  - kategori TEXT
+  - foto TEXT
+  - deskripsi TEXT
+  - created_at DATETIME
+
+3) riwayat
+  - id INTEGER PRIMARY KEY
+  - tipe TEXT
+  - barang_id INTEGER
+  - barang_nama TEXT
+  - jumlah INTEGER
+  - catatan TEXT
+  - dibuat_oleh TEXT
+  - created_at DATETIME
+
+4) more
+  - id INTEGER PRIMARY KEY
+  - custom_message TEXT
+  - sticky_message TEXT
+  - welcome_image_url TEXT
+  - updated_by TEXT
+  - updated_at DATETIME
+
+--- TEMPORER / NOTES (session) ---
+- Current issues: earlier bad wrangler.toml edits and worker variants caused deploy failure. Use this snapshot and do not change naming.
+- When debugging: always provide deploy logs and exact worker.js content if you need me to patch.
+- Secrets: do NOT commit real IMG_BB_KEY to repo; set as secret in CF.
+
+--- DEPLOY CHECKLIST (short)
+1. Place worker.js + wrangler.toml in repo root.
+2. Ensure wrangler.toml database_id equals D1 ID above.
+3. Ensure worker file named exactly worker.js.
+4. Set IMG_BB_KEY in CF worker variables or wrangler secret (preferred).
+5. Push; watch Cloudflare deploy logs. If error code 10021 or binding error -> re-check database_id and wrangler format.
+
+End of SNAPSHOT_MASTER_v1.txt
