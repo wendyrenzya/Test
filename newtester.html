@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BMT API Diagnostic Tester</title>
+
+<style>
+body { font-family: Arial; background:#eef1f5; margin:0; padding:15px; }
+h1 { text-align:center; }
+.card {
+  background:#fff; padding:15px; border-radius:12px; margin-bottom:25px;
+  box-shadow:0 4px 12px rgba(0,0,0,0.09);
+}
+input, textarea, button {
+  width:100%; padding:12px; margin-top:8px; margin-bottom:12px;
+  border-radius:10px; font-size:15px;
+}
+input, textarea {
+  border:1px solid #bbb;
+}
+button {
+  background:#1976d2; border:0; color:white; font-weight:bold; font-size:16px;
+  border-radius:10px;
+}
+#log { 
+  background:#000; color:#0f0; padding:12px; border-radius:10px;
+  white-space:pre-wrap; font-size:13px; max-height:500px; overflow:auto;
+}
+.section-title { font-weight:bold; font-size:17px; margin-bottom:12px; }
+.ok { color:#0f0; }
+.err { color:#f33; }
+.warn { color:#ff0; }
+</style>
+
+</head>
+<body>
+
+<h1>Diagnostic API Tester</h1>
+
+<div class="card">
+  <div class="section-title">API Base</div>
+  <input id="apiBase" value="https://api.bigmotor.biz.id">
+  <button onclick="saveApi()">Save Base URL</button>
+</div>
+
+<div class="card">
+  <div class="section-title">LOGIN</div>
+  <input id="u" placeholder="username tanpa @bigmotor.biz.id">
+  <input id="p" type="password" placeholder="password">
+  <button onclick="doLogin()">TEST LOGIN</button>
+</div>
+
+<div class="card">
+  <div class="section-title">GET BARANG</div>
+  <button onclick="testGet('/barang')">GET /barang</button>
+</div>
+
+<div class="card">
+  <div class="section-title">UPLOAD FOTO</div>
+  <input type="file" id="file">
+  <button onclick="testUpload()">UPLOAD</button>
+</div>
+
+<div class="card">
+  <div class="section-title">STOK MASUK</div>
+  <input id="sm_id" placeholder="barang_id">
+  <input id="sm_qty" placeholder="qty">
+  <button onclick="testStok('stok_masuk')">POST /stok_masuk</button>
+</div>
+
+<div class="card">
+  <div class="section-title">STOK KELUAR</div>
+  <input id="sk_id" placeholder="barang_id">
+  <input id="sk_qty" placeholder="qty">
+  <button onclick="testStok('stok_keluar')">POST /stok_keluar</button>
+</div>
+
+<div class="card">
+  <div class="section-title">MORE</div>
+  <button onclick="testGet('/more')">GET /more</button>
+</div>
+
+<h2>Diagnostic Log</h2>
+<pre id="log">Ready.</pre>
+
+<script>
+let BASE = localStorage.getItem("api_base") || document.getElementById("apiBase").value;
+let USER = null;
+
+function saveApi() {
+  BASE = document.getElementById("apiBase").value.trim();
+  localStorage.setItem("api_base", BASE);
+  log("API Base saved: " + BASE, "ok");
+}
+
+function log(msg, type="") {
+  const color = type==="err" ? "#f44" : type==="warn" ? "#ff0" : "#0f0";
+  document.getElementById("log").innerHTML =
+    `<span style="color:${color}">${msg}</span>`;
+}
+
+function nice(obj) {
+  return JSON.stringify(obj, null, 2);
+}
+
+async function diagnosticFetch(url, options) {
+  let reqInfo = { url, ...options };
+  log("REQUEST:\n" + nice(reqInfo) + "\n\n>> Waiting...", "warn");
+
+  try {
+    let res = await fetch(url, options);
+
+    let text = await res.text();
+    let parsed = null;
+    try { parsed = JSON.parse(text); } catch(e) { parsed = "NOT JSON"; }
+
+    let diag = {
+      request: reqInfo,
+      status: res.status,
+      statusText: res.statusText,
+      ok: res.ok,
+      headers: Object.fromEntries(res.headers.entries()),
+      rawBody: text,
+      json: parsed
+    };
+
+    if (!res.ok) {
+      log("ERROR RESPONSE:\n" + nice(diag), "err");
+    } else {
+      log("SUCCESS RESPONSE:\n" + nice(diag), "ok");
+    }
+
+    return diag;
+
+  } catch(e) {
+    log("NETWORK / WORKER FAILURE:\n" + e.message, "err");
+    return { error: e.message };
+  }
+}
+
+async function doLogin() {
+  const u = document.getElementById("u").value.trim();
+  const p = document.getElementById("p").value.trim();
+
+  const body = { username: u + "@bigmotor.biz.id", password:p };
+
+  let res = await diagnosticFetch(BASE + "/login", {
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body: JSON.stringify(body)
+  });
+
+  if(res.json && res.json.ok) {
+    USER = res.json.user;
+  }
+}
+
+async function testGet(route) {
+  await diagnosticFetch(BASE + route, { method:"GET" });
+}
+
+async function testUpload() {
+  let f = document.getElementById("file").files[0];
+  if(!f) return log("Pilih file dulu!", "warn");
+
+  let fd = new FormData();
+  fd.append("file", f);
+
+  await diagnosticFetch(BASE + "/upload", {
+    method:"POST",
+    body: fd
+  });
+}
+
+async function testStok(route) {
+  let id = route==="stok_masuk"
+      ? document.getElementById("sm_id").value
+      : document.getElementById("sk_id").value;
+
+  let qty = route==="stok_masuk"
+      ? document.getElementById("sm_qty").value
+      : document.getElementById("sk_qty").value;
+
+  let body = {
+    barang_id: Number(id),
+    jumlah: Number(qty),
+    catatan:"test"
+  };
+
+  let headers = { "Content-Type":"application/json" };
+  if(USER) headers["X-User"] = USER.username;
+
+  await diagnosticFetch(BASE + "/" + route, {
+    method:"POST",
+    headers,
+    body: JSON.stringify(body)
+  });
+}
+</script>
+
+</body>
+</html>
