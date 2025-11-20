@@ -1,0 +1,27 @@
+PAGE: PENGATURAN (bottom navbar)
+
+Top Section:
+- Foto profil (upload → imgbb)
+- Nama user
+- Username
+- Role
+- Tombol Logout
+
+Owner Features:
+- Buat user baru
+- Set role user
+- Reset password user (tanpa melihat password)
+- Hapus user
+
+Role limitations:
+- Admin hanya boleh edit dirinya sendiri
+- Mekanik hanya boleh edit nama & password sendiri
+
+API:
+GET /users/me
+POST /users/me/update
+POST /users/add
+POST /users/update-role
+POST /users/reset-password
+POST /users/delete
+POST /upload  (foto profil)
