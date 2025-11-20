@@ -1,0 +1,17 @@
+PAGE: PENJUALAN
+
+Flow sama seperti stok masuk:
+1. Summary barang
+2. Pilih barang
+3. Input qty keluar
+4. Simpan → stok berkurang otomatis
+
+Fields:
+- barang_id
+- qty
+- harga_jual
+- deskripsi (opsional)
+- created_by
+
+API:
+POST /stock-keluar/add
