@@ -1,203 +1,610 @@
-<!DOCTYPE html>
-<html>
+<!doctype html>
+<html lang="id">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>BMT API Diagnostic Tester</title>
-
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>BMT - Full UI Tester v3</title>
 <style>
-body { font-family: Arial; background:#eef1f5; margin:0; padding:15px; }
-h1 { text-align:center; }
-.card {
-  background:#fff; padding:15px; border-radius:12px; margin-bottom:25px;
-  box-shadow:0 4px 12px rgba(0,0,0,0.09);
+/* minimal modern mobile-first style */
+/* why: single-file portable UI for testing */
+:root{
+  --bg:#f3f6f9; --card:#fff; --accent:#0676d6; --muted:#6b7280;
+  --danger:#d32f2f; --ok:#16a34a; --glass:rgba(255,255,255,0.85);
+  --radius:12px; --maxW:480px;
 }
-input, textarea, button {
-  width:100%; padding:12px; margin-top:8px; margin-bottom:12px;
-  border-radius:10px; font-size:15px;
-}
-input, textarea {
-  border:1px solid #bbb;
-}
-button {
-  background:#1976d2; border:0; color:white; font-weight:bold; font-size:16px;
-  border-radius:10px;
-}
-#log { 
-  background:#000; color:#0f0; padding:12px; border-radius:10px;
-  white-space:pre-wrap; font-size:13px; max-height:500px; overflow:auto;
-}
-.section-title { font-weight:bold; font-size:17px; margin-bottom:12px; }
-.ok { color:#0f0; }
-.err { color:#f33; }
-.warn { color:#ff0; }
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;font-family:Inter,system-ui,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial;}
+body{background:var(--bg); color:#0b1220; display:flex; justify-content:center; padding:12px;}
+.app{width:100%; max-width:var(--maxW);}
+.header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.brand{font-weight:700;font-size:18px}
+.version{font-size:12px;color:var(--muted)}
+.card{background:var(--card);border-radius:var(--radius);padding:12px;margin-bottom:12px;box-shadow:0 6px 18px rgba(20,20,20,.04);}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;}
+.grid .tile{background:linear-gradient(180deg,#fff,#fbfdff);padding:14px;border-radius:12px;text-align:center;box-shadow:0 6px 18px rgba(20,20,20,.04);font-weight:700;cursor:pointer}
+.small{font-size:12px;color:var(--muted)}
+.input{width:100%;padding:10px;border-radius:10px;border:1px solid #e6eef8;margin-top:6px}
+.btn{display:inline-block;background:var(--accent);color:#fff;padding:10px 12px;border-radius:10px;border:0;font-weight:700;cursor:pointer}
+.btn.ghost{background:#fff;color:var(--accent);border:1px solid #e6eef8}
+.row{display:flex;gap:8px}
+.flex{display:flex;align-items:center;gap:8px}
+.list{max-height:52vh;overflow:auto;padding-right:6px}
+.item{display:flex;gap:10px;align-items:center;padding:10px;border-radius:10px;background:linear-gradient(180deg,#fff,#fbfdff);margin-bottom:8px}
+.thumb{width:64px;height:64px;border-radius:8px;background:#e9eef8;display:flex;align-items:center;justify-content:center;font-size:20px;color:var(--muted);object-fit:cover}
+.meta{flex:1}
+.meta h4{margin:0 0 6px 0;font-size:15px}
+.meta p{margin:0;color:var(--muted);font-size:13px}
+.searchbar{display:flex;gap:8px;margin-bottom:8px}
+.fab{position:fixed;right:16px;bottom:80px;background:var(--accent);color:#fff;padding:14px;border-radius:50%;box-shadow:0 10px 30px rgba(6,118,214,.2);cursor:pointer;border:0}
+.bottom-nav{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid #eee;padding:8px 12px;display:flex;justify-content:space-around;align-items:center;box-shadow:0 -6px 20px rgba(10,10,10,.03)}
+.nav-item{display:flex;flex-direction:column;align-items:center;font-size:12px;color:var(--muted);cursor:pointer}
+.hidden{display:none}
+.modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,0.3);display:flex;align-items:flex-end;justify-content:center;padding:12px}
+.sheet{width:100%;max-width:480px;background:var(--card);border-radius:12px;padding:12px}
+.row-between{display:flex;justify-content:space-between;align-items:center}
+.log{background:#0b1220;color:#9fffa6;padding:12px;border-radius:10px;max-height:28vh;overflow:auto;font-family:monospace;font-size:12px}
+.kv{font-size:13px;color:var(--muted);margin-top:6px}
+.badge{display:inline-block;padding:6px 8px;background:#f0f4ff;border-radius:999px;font-size:12px;color:var(--accent)}
+/* responsive tweak */
+@media(min-width:600px){ .grid{grid-template-columns:repeat(2,1fr)} }
 </style>
-
 </head>
 <body>
+<div class="app" id="app">
 
-<h1>Diagnostic API Tester</h1>
+  <div class="header">
+    <div>
+      <div class="brand">Big Motor — Tester v3 <span class="version" id="versionTag">1.0.9 (beta)</span></div>
+      <div class="small" id="deviceTime"></div>
+    </div>
+    <div class="flex">
+      <div id="currentUserBox" class="small">Not logged</div>
+      <button class="btn ghost" id="btnOpenApi">API</button>
+    </div>
+  </div>
 
-<div class="card">
-  <div class="section-title">API Base</div>
-  <input id="apiBase" value="https://api.bigmotor.biz.id">
-  <button onclick="saveApi()">Save Base URL</button>
+  <div id="pageContainer">
+    <!-- login page shown by default if no user -->
+    <div id="page_login" class="card hidden">
+      <h3>Login</h3>
+      <input id="login_username" class="input" placeholder="username (tanpa @bigmotor.biz.id)">
+      <input id="login_password" class="input" placeholder="password" type="password">
+      <div class="row">
+        <button class="btn" id="btnLogin">Masuk</button>
+        <button class="btn ghost" id="btnClearUser">Clear</button>
+      </div>
+      <div id="loginMsg" class="kv"></div>
+    </div>
+
+    <div id="page_home" class="card hidden">
+      <div class="row-between">
+        <h3>Beranda</h3>
+        <div class="small">Jam device: <span id="timeDevice"></span></div>
+      </div>
+
+      <div class="card" id="customMessageBox" style="display:block"></div>
+
+      <div class="grid" id="homeGrid">
+        <div class="tile" data-page="penjualan">Penjualan</div>
+        <div class="tile" data-page="servis">Servis</div>
+        <div class="tile" data-page="stok_masuk">Stock Masuk</div>
+        <div class="tile" data-page="pengeluaran">Pengeluaran</div>
+        <div class="tile" data-page="laporan">Laporan</div>
+        <div class="tile" data-page="more">More</div>
+      </div>
+    </div>
+
+    <div id="page_barang" class="card hidden">
+      <div class="row-between"><h3>Barang</h3><div><button class="btn" id="backFromBarang">Back</button></div></div>
+
+      <div class="searchbar">
+        <input id="searchInput" class="input" placeholder="Cari barang (real-time)">
+        <select id="filterKategori" class="input" style="max-width:140px">
+          <option value="">Semua</option>
+        </select>
+      </div>
+
+      <div id="barangList" class="list"></div>
+      <button id="fabAddBarang" class="fab" title="+ Barang">+</button>
+
+      <!-- inline form modal -->
+      <div id="modal_add_barang" class="hidden modal-backdrop" style="display:none">
+        <div class="sheet">
+          <div class="row-between"><strong id="formTitle">Tambah Barang</strong><button id="closeForm" class="btn ghost">X</button></div>
+          <label class="kv">Nama</label><input id="f_nama" class="input">
+          <label class="kv">Harga <small>(wajib)</small></label><input id="f_harga" class="input" type="number">
+          <label class="kv">Harga Modal</label><input id="f_harga_modal" class="input" type="number">
+          <label class="kv">Stock <small>(wajib)</small></label><input id="f_stock" class="input" type="number">
+          <label class="kv">Kategori</label><input id="f_kategori" class="input">
+          <label class="kv">Foto (URL)</label><input id="f_foto" class="input" placeholder="kosong = akan tampil kotak abu-abu">
+          <label class="kv">Catatan / Deskripsi</label><textarea id="f_deskripsi" class="input" style="height:80px"></textarea>
+          <div class="row">
+            <button id="saveBarangBtn" class="btn" disabled>Simpan</button>
+            <button id="cancelBarangBtn" class="btn ghost">Batal</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="page_stok_masuk" class="card hidden">
+      <div class="row-between"><h3>Stock Masuk</h3><div><button class="btn" id="backFromStok">Back</button></div></div>
+      <div id="sm_summary" class="kv">Pilih 'Pilih Barang' untuk menambah ke summary.</div>
+      <div id="sm_list" class="list"></div>
+      <div style="margin-top:8px"><button id="sm_add_item" class="btn">Tambah Barang</button></div>
+
+      <!-- bottom sheet add qty -->
+      <div id="sheet_sm" class="hidden modal-backdrop" style="display:none">
+        <div class="sheet">
+          <div class="row-between"><strong id="sm_item_name">-</strong><div><button id="sm_close" class="btn ghost">X</button></div></div>
+          <div class="row" style="margin-top:8px">
+            <button id="sm_minus" class="btn ghost" style="width:48px">-</button>
+            <input id="sm_qty_input" class="input" type="number" value="1" style="flex:1">
+            <button id="sm_plus" class="btn ghost" style="width:48px">+</button>
+          </div>
+          <label class="kv">Catatan</label><input id="sm_cat" class="input">
+          <div class="row">
+            <button id="sm_confirm" class="btn">Tambahkan & Konfirmasi</button>
+            <button id="sm_cancel" class="btn ghost">Batal</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="page_penjualan" class="card hidden">
+      <div class="row-between"><h3>Penjualan</h3><div><button class="btn" id="backFromJual">Back</button></div></div>
+      <div id="jual_list" class="list"></div>
+    </div>
+
+    <div id="page_more" class="card hidden">
+      <div class="row-between"><h3>More</h3><div><button class="btn" id="backFromMore">Back</button></div></div>
+      <div id="more_box" class="card"></div>
+      <div>
+        <label class="kv">Custom message</label><input id="more_custom" class="input">
+        <label class="kv">Sticky message</label><input id="more_sticky" class="input">
+        <label class="kv">Welcome image URL</label><input id="more_welcome" class="input">
+        <div class="row">
+          <button id="more_save" class="btn">Simpan More</button>
+          <button id="more_get" class="btn ghost">Reload</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="page_riwayat" class="card hidden">
+      <div class="row-between"><h3>Riwayat</h3><div><button class="btn" id="backFromRiwayat">Back</button></div></div>
+      <div id="riwayat_box" class="list"></div>
+    </div>
+
+    <div id="page_pengeluaran" class="card hidden">
+      <div class="row-between"><h3>Pengeluaran (coming soon)</h3><div><button class="btn" id="backFromPengeluaran">Back</button></div></div>
+      <p class="small">Coming soon</p>
+    </div>
+
+    <div id="page_laporan" class="card hidden">
+      <div class="row-between"><h3>Laporan (coming soon)</h3><div><button class="btn" id="backFromLaporan">Back</button></div></div>
+      <p class="small">Coming soon</p>
+    </div>
+
+  </div> <!-- pageContainer -->
+
+  <div style="height:72px"></div>
+  <div class="bottom-nav" id="bottomNav">
+    <div class="nav-item" data-nav="home"><div>🏠</div><div>Beranda</div></div>
+    <div class="nav-item" data-nav="barang"><div>📦</div><div>Barang</div></div>
+    <div class="nav-item" data-nav="riwayat"><div>🕘</div><div>Riwayat</div></div>
+    <div class="nav-item" data-nav="pengaturan"><div>⚙️</div><div>Pengaturan</div></div>
+  </div>
+
+  <div class="card">
+    <div class="row-between"><strong>Diagnostic Inspector</strong><div class="badge" id="apiBaseBadge"></div></div>
+    <div class="kv">Request / Response inspector — akan menampilkan JSON & raw data.</div>
+    <pre id="diagLog" class="log">Ready.</pre>
+  </div>
+
 </div>
-
-<div class="card">
-  <div class="section-title">LOGIN</div>
-  <input id="u" placeholder="username tanpa @bigmotor.biz.id">
-  <input id="p" type="password" placeholder="password">
-  <button onclick="doLogin()">TEST LOGIN</button>
-</div>
-
-<div class="card">
-  <div class="section-title">GET BARANG</div>
-  <button onclick="testGet('/barang')">GET /barang</button>
-</div>
-
-<div class="card">
-  <div class="section-title">UPLOAD FOTO</div>
-  <input type="file" id="file">
-  <button onclick="testUpload()">UPLOAD</button>
-</div>
-
-<div class="card">
-  <div class="section-title">STOK MASUK</div>
-  <input id="sm_id" placeholder="barang_id">
-  <input id="sm_qty" placeholder="qty">
-  <button onclick="testStok('stok_masuk')">POST /stok_masuk</button>
-</div>
-
-<div class="card">
-  <div class="section-title">STOK KELUAR</div>
-  <input id="sk_id" placeholder="barang_id">
-  <input id="sk_qty" placeholder="qty">
-  <button onclick="testStok('stok_keluar')">POST /stok_keluar</button>
-</div>
-
-<div class="card">
-  <div class="section-title">MORE</div>
-  <button onclick="testGet('/more')">GET /more</button>
-</div>
-
-<h2>Diagnostic Log</h2>
-<pre id="log">Ready.</pre>
 
 <script>
-let BASE = localStorage.getItem("api_base") || document.getElementById("apiBase").value;
-let USER = null;
+/* single-file SPA tester logic
+   why: keep tester portable and easy to run locally on HP
+*/
 
-function saveApi() {
-  BASE = document.getElementById("apiBase").value.trim();
-  localStorage.setItem("api_base", BASE);
-  log("API Base saved: " + BASE, "ok");
+/* ---------- Config & state ---------- */
+const VERSION = "1.0.9 (beta)";
+const DEFAULT_API = localStorage.getItem("BMT_API_BASE") || "https://api.bigmotor.biz.id";
+let API_BASE = DEFAULT_API;
+let USER = JSON.parse(localStorage.getItem("bmt_user") || "null");
+let BARANG_CACHE = [];
+let SM_TEMP = []; // stock masuk temporary list
+let EDIT_ID = null;
+
+/* ---------- UI helpers ---------- */
+const $ = id => document.getElementById(id);
+const show = id => { document.querySelectorAll('[id^="page_"]').forEach(el=>el.classList.add('hidden')); $(id).classList.remove('hidden'); window.scrollTo(0,0); };
+const setDiag = (obj) => { $('diagLog').textContent = typeof obj === 'string' ? obj : JSON.stringify(obj, null, 2); };
+const setUserBox = () => {
+  $('currentUserBox').textContent = USER ? (USER.name || USER.username) : "Not logged";
+};
+const updateTime = ()=> $('deviceTime').textContent = new Date().toLocaleString();
+setInterval(updateTime,1000);
+
+/* init view depending login */
+function initApp(){
+  $('versionTag').textContent = VERSION;
+  $('apiBaseBadge').textContent = API_BASE;
+  setUserBox();
+  if(!USER) { show('page_login'); $('page_login').classList.remove('hidden'); } else { show('page_home'); loadHome(); }
 }
+initApp();
 
-function log(msg, type="") {
-  const color = type==="err" ? "#f44" : type==="warn" ? "#ff0" : "#0f0";
-  document.getElementById("log").innerHTML =
-    `<span style="color:${color}">${msg}</span>`;
-}
-
-function nice(obj) {
-  return JSON.stringify(obj, null, 2);
-}
-
-async function diagnosticFetch(url, options) {
-  let reqInfo = { url, ...options };
-  log("REQUEST:\n" + nice(reqInfo) + "\n\n>> Waiting...", "warn");
-
+/* ---------- fetch wrapper diagnostic ---------- */
+async function apiFetch(path, opts = {}) {
+  const url = API_BASE.replace(/\/+$/,'') + path;
+  const headers = opts.headers || {};
+  if (USER && USER.username) headers['X-User'] = USER.username;
+  if (!opts.body && opts.method && opts.method.toUpperCase() !== 'GET' && !(opts.body instanceof FormData)) headers['Content-Type'] = 'application/json';
+  const req = { url, method: opts.method || 'GET', headers, body: opts.body && !(opts.body instanceof FormData) ? opts.body : '(formdata/binary)' };
+  setDiag({ stage: 'request', req });
   try {
-    let res = await fetch(url, options);
-
-    let text = await res.text();
+    const fetchOpts = { method: opts.method || 'GET', headers };
+    if (opts.body) fetchOpts.body = opts.body;
+    const res = await fetch(url, fetchOpts);
+    const hdrs = {};
+    res.headers.forEach((v,k)=>hdrs[k]=v);
+    const status = res.status;
+    const text = await res.text();
     let parsed = null;
-    try { parsed = JSON.parse(text); } catch(e) { parsed = "NOT JSON"; }
+    try { parsed = JSON.parse(text); } catch(e){ parsed = null; }
+    const result = { stage:'response', status, statusText: res.statusText, headers: hdrs, raw: text, json: parsed };
+    setDiag(result);
+    return result;
+  } catch (e) {
+    setDiag({ stage:'network-error', error: String(e) });
+    throw e;
+  }
+}
 
-    let diag = {
-      request: reqInfo,
-      status: res.status,
-      statusText: res.statusText,
-      ok: res.ok,
-      headers: Object.fromEntries(res.headers.entries()),
-      rawBody: text,
-      json: parsed
-    };
-
-    if (!res.ok) {
-      log("ERROR RESPONSE:\n" + nice(diag), "err");
+/* ---------- API functions ---------- */
+async function login(username, password) {
+  const userFull = username.includes('@') ? username : username + '@bigmotor.biz.id';
+  const body = JSON.stringify({ username: userFull, password });
+  try {
+    const r = await apiFetch('/login', { method:'POST', body });
+    if (r.json && r.json.ok) {
+      USER = r.json.user;
+      localStorage.setItem('bmt_user', JSON.stringify(USER));
+      setUserBox();
+      show('page_home'); loadHome();
+      return true;
     } else {
-      log("SUCCESS RESPONSE:\n" + nice(diag), "ok");
+      $('loginMsg').textContent = r.json ? (r.json.error || JSON.stringify(r.json)) : r.raw || 'Login failed';
+      return false;
     }
+  } catch(e) { $('loginMsg').textContent = 'Network error: ' + e.message; return false; }
+}
 
-    return diag;
-
+async function fetchBarang() {
+  try {
+    const r = await apiFetch('/barang');
+    if (r.json && r.json.ok) {
+      BARANG_CACHE = r.json.results || [];
+      renderBarang(BARANG_CACHE);
+      populateKategoriFilter(BARANG_CACHE);
+    } else {
+      setDiag({ error: 'Failed fetch barang', detail: r });
+    }
   } catch(e) {
-    log("NETWORK / WORKER FAILURE:\n" + e.message, "err");
-    return { error: e.message };
+    setDiag({ error: 'Network error fetching barang', detail: String(e) });
   }
 }
 
-async function doLogin() {
-  const u = document.getElementById("u").value.trim();
-  const p = document.getElementById("p").value.trim();
+async function fetchMore() {
+  try {
+    const r = await apiFetch('/more');
+    if (r.json && r.json.ok) {
+      const res = r.json.result || {};
+      $('customMessageBox').textContent = res.custom_message || '';
+      $('more_custom').value = res.custom_message || '';
+      $('more_sticky').value = res.sticky_message || '';
+      $('more_welcome').value = res.welcome_image_url || '';
+    } else {
+      setDiag(r);
+    }
+  } catch(e) { setDiag({error:String(e)}); }
+}
 
-  const body = { username: u + "@bigmotor.biz.id", password:p };
+async function fetchRiwayat() {
+  try {
+    const r = await apiFetch('/riwayat');
+    if (r.json && r.json.ok) {
+      renderRiwayat(r.json.results || []);
+    } else setDiag(r);
+  } catch(e) { setDiag({error:String(e)}); }
+}
 
-  let res = await diagnosticFetch(BASE + "/login", {
-    method:"POST",
-    headers:{ "Content-Type":"application/json" },
-    body: JSON.stringify(body)
+/* ---------- UI and interactions ---------- */
+
+/* API base modal */
+$('btnOpenApi').addEventListener('click', ()=>{
+  const v = prompt('API base URL', API_BASE);
+  if (v !== null) { API_BASE = v.trim() || API_BASE; localStorage.setItem('BMT_API_BASE', API_BASE); $('apiBaseBadge').textContent = API_BASE; setDiag('API base set to ' + API_BASE); }
+});
+
+/* login */
+$('btnLogin').addEventListener('click', async ()=> {
+  const u = $('login_username').value.trim();
+  const p = $('login_password').value.trim();
+  $('loginMsg').textContent = '';
+  if(!u || !p) { $('loginMsg').textContent = 'Isi username & password'; return; }
+  await login(u,p);
+});
+
+/* clear user */
+$('btnClearUser').addEventListener('click', ()=>{
+  USER = null; localStorage.removeItem('bmt_user'); setUserBox(); show('page_login');
+});
+
+/* nav items */
+document.querySelectorAll('.nav-item').forEach(el=>{
+  el.addEventListener('click', ()=> {
+    const nav = el.getAttribute('data-nav');
+    if(nav === 'home') { show('page_home'); loadHome(); }
+    if(nav === 'barang') { show('page_barang'); loadBarangPage(); }
+    if(nav === 'riwayat') { show('page_riwayat'); fetchRiwayat(); }
+    if(nav === 'pengaturan') { alert('Pengaturan: coming soon'); }
   });
+});
 
-  if(res.json && res.json.ok) {
-    USER = res.json.user;
+/* home grid */
+document.getElementById('homeGrid').addEventListener('click', (e)=>{
+  const tile = e.target.closest('.tile');
+  if(!tile) return;
+  const page = tile.getAttribute('data-page');
+  switch(page){
+    case 'penjualan': show('page_penjualan'); loadPenjualan(); break;
+    case 'servis': alert('Servis: coming soon'); break;
+    case 'stok_masuk': show('page_stok_masuk'); loadStokMasuk(); break;
+    case 'pengeluaran': show('page_pengeluaran'); break;
+    case 'laporan': show('page_laporan'); break;
+    case 'more': show('page_more'); fetchMore(); break;
   }
+});
+
+/* back buttons */
+['backFromBarang','backFromStok','backFromJual','backFromMore','backFromRiwayat','backFromPengeluaran','backFromLaporan'].forEach(id=>{
+  const el = $(id);
+  if(el) el.addEventListener('click', ()=> { show('page_home'); loadHome(); });
+});
+
+/* load home */
+function loadHome(){
+  fetchMore();
 }
 
-async function testGet(route) {
-  await diagnosticFetch(BASE + route, { method:"GET" });
+/* ---------- Barang page ---------- */
+function loadBarangPage(){
+  fetchBarang();
+  show('page_barang');
 }
-
-async function testUpload() {
-  let f = document.getElementById("file").files[0];
-  if(!f) return log("Pilih file dulu!", "warn");
-
-  let fd = new FormData();
-  fd.append("file", f);
-
-  await diagnosticFetch(BASE + "/upload", {
-    method:"POST",
-    body: fd
+function renderBarang(list){
+  const box = $('barangList'); box.innerHTML='';
+  list.forEach(b=>{
+    const div = document.createElement('div'); div.className='item';
+    const img = document.createElement('img');
+    img.className='thumb';
+    if(b.foto) { img.src=b.foto; img.onerror = ()=>{ img.src=''; img.style.background = '#e9eef8'; img.alt='no'; }; }
+    else { img.src=''; img.style.background='#e9eef8'; img.alt='no'; }
+    const meta = document.createElement('div'); meta.className='meta';
+    meta.innerHTML = `<h4>${escape(b.nama)}</h4><p>Stok: ${b.stock} — Rp ${num(b.harga)} • ${escape(b.kategori||'')}</p>`;
+    const actions = document.createElement('div');
+    actions.innerHTML = `<div style="display:flex;flex-direction:column;gap:6px">
+      <button class="btn" onclick="onEditBarang(${b.id})">Edit</button>
+      <button class="btn ghost" onclick="onSelectBarangForSM(${b.id})">Pilih</button>
+    </div>`;
+    div.appendChild(img); div.appendChild(meta); div.appendChild(actions);
+    box.appendChild(div);
   });
 }
+function populateKategoriFilter(list){
+  const s = $('filterKategori'); const set = new Set(list.map(x=>x.kategori).filter(Boolean));
+  s.innerHTML = '<option value="">Semua</option>';
+  set.forEach(k=> { const o = document.createElement('option'); o.value=k; o.textContent=k; s.appendChild(o); });
+}
 
-async function testStok(route) {
-  let id = route==="stok_masuk"
-      ? document.getElementById("sm_id").value
-      : document.getElementById("sk_id").value;
+/* search & filter */
+$('searchInput').addEventListener('input', (e)=>{
+  const q = e.target.value.trim().toLowerCase();
+  const tokens = q.split(/\s+/).filter(Boolean);
+  const filtered = BARANG_CACHE.filter(b=>{
+    const text = (b.nama + ' ' + (b.kategori||'') + ' ' + (b.deskripsi||'')).toLowerCase();
+    // fuzzy token match
+    return tokens.every(t => text.includes(t));
+  });
+  renderBarang(filtered);
+});
+$('filterKategori').addEventListener('change', ()=>{
+  const k = $('filterKategori').value;
+  renderBarang(k ? BARANG_CACHE.filter(b=>b.kategori===k) : BARANG_CACHE);
+});
 
-  let qty = route==="stok_masuk"
-      ? document.getElementById("sm_qty").value
-      : document.getElementById("sk_qty").value;
+/* add/edit modal handlers */
+$('fabAddBarang').addEventListener('click', ()=> openBarangForm());
+$('closeForm').addEventListener('click', ()=> closeBarangForm());
+$('cancelBarangBtn').addEventListener('click', ()=> closeBarangForm());
+$('saveBarangBtn').addEventListener('click', saveBarangForm);
 
-  let body = {
-    barang_id: Number(id),
-    jumlah: Number(qty),
-    catatan:"test"
+/* validation for required fields stock & harga */
+['f_nama','f_harga','f_stock'].forEach(id=>{
+  $(id).addEventListener('input', ()=> {
+    const nama = $('f_nama').value.trim();
+    const h = $('f_harga').value;
+    const s = $('f_stock').value;
+    const ok = nama.length>0 && h !== '' && s !== '';
+    $('saveBarangBtn').disabled = !ok;
+  });
+});
+
+function openBarangForm(data=null){
+  EDIT_ID = null;
+  $('formTitle').textContent = data ? 'Edit Barang' : 'Tambah Barang';
+  ['f_nama','f_harga','f_harga_modal','f_stock','f_kategori','f_foto','f_deskripsi'].forEach(id=> $(id).value = data ? (data[id.replace('f_','')] || data[id.replace('f_','')]) : '');
+  if(data){ EDIT_ID = data.id; $('f_nama').value = data.nama || ''; $('f_harga').value = data.harga || 0; $('f_stock').value = data.stock || 0; $('f_kategori').value = data.kategori || ''; $('f_foto').value = data.foto || ''; $('f_deskripsi').value = data.deskripsi || ''; }
+  $('modal_add_barang').style.display='flex';
+}
+function closeBarangForm(){ $('modal_add_barang').style.display='none'; EDIT_ID=null; }
+
+async function onEditBarang(id){
+  const b = BARANG_CACHE.find(x=>x.id==id);
+  if(!b) return alert('Barang tidak ditemukan'); openBarangForm(b);
+}
+async function saveBarangForm(){
+  const payload = {
+    nama: $('f_nama').value.trim(),
+    harga: Number($('f_harga').value||0),
+    harga_modal: Number($('f_harga_modal').value||0),
+    stock: Number($('f_stock').value||0),
+    kategori: $('f_kategori').value.trim(),
+    foto: $('f_foto').value.trim(),
+    deskripsi: $('f_deskripsi').value.trim()
   };
+  try{
+    const path = EDIT_ID ? '/barang/' + EDIT_ID : '/barang';
+    const method = EDIT_ID ? 'PUT' : 'POST';
+    const res = await apiFetch(path, { method, body: JSON.stringify(payload) });
+    if(res.json && res.json.ok){ closeBarangForm(); await fetchBarang(); setDiag({ ok:'saved', res }); }
+    else setDiag({error:'save failed', detail:res});
+  } catch(e){ setDiag({error:String(e)}); }
+}
 
-  let headers = { "Content-Type":"application/json" };
-  if(USER) headers["X-User"] = USER.username;
+/* ---------- Stok Masuk UI ---------- */
+async function loadStokMasuk(){
+  await fetchBarang(); SM_TEMP = []; renderSM();
+}
+function renderSM(){
+  const box = $('sm_list'); box.innerHTML='';
+  // show current temporary items
+  SM_TEMP.forEach((it, idx)=>{
+    const div = document.createElement('div'); div.className='item';
+    div.innerHTML = `<div class="meta"><h4>${escape(it.nama)}</h4><p>Qty masuk: <span style="color:green">${it.jumlah}</span> • Stok awal: ${it.stockBefore} → ${it.stockAfter}</p></div>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <button class="btn" onclick="removeSM(${idx})">X</button>
+      </div>`;
+    box.appendChild(div);
+  });
+  $('sm_summary').textContent = SM_TEMP.length ? `${SM_TEMP.length} jenis barang siap diproses` : 'Belum ada barang ditambahkan';
+}
 
-  await diagnosticFetch(BASE + "/" + route, {
-    method:"POST",
-    headers,
-    body: JSON.stringify(body)
+/* select an item to add - triggered from barang "Pilih" */
+function onSelectBarangForSM(id){
+  const b = BARANG_CACHE.find(x=>x.id==id);
+  if(!b) return alert('Barang tidak ditemukan');
+  openSheetSM(b);
+}
+function onSelectBarangForSM_global(id){ onSelectBarangForSM(id); }
+
+/* sheet controls */
+function openSheetSM(item){
+  $('sm_item_name').textContent = item.nama;
+  $('sm_qty_input').value = 1;
+  $('sheet_sm').style.display='flex';
+  $('sheet_sm').dataset.bid = item.id;
+  $('sheet_sm').dataset.stock = item.stock;
+}
+$('sm_close').addEventListener('click', ()=> $('sheet_sm').style.display='none');
+$('sm_cancel').addEventListener('click', ()=> $('sheet_sm').style.display='none');
+$('sm_plus').addEventListener('click', ()=> $('sm_qty_input').stepUp());
+$('sm_minus').addEventListener('click', ()=> { if(Number($('sm_qty_input').value)>1) $('sm_qty_input').stepDown(); });
+
+$('sm_confirm').addEventListener('click', async ()=>{
+  const bid = Number($('sheet_sm').dataset.bid);
+  const stockBefore = Number($('sheet_sm').dataset.stock || 0);
+  const qty = Number($('sm_qty_input').value || 0);
+  if(!qty || qty<=0) return alert('Qty harus > 0');
+  const b = BARANG_CACHE.find(x=>x.id==bid);
+  const item = { barang_id: bid, nama: b.nama, jumlah: qty, stockBefore, stockAfter: stockBefore + qty, catatan: $('sm_cat').value || '' };
+  SM_TEMP.push(item);
+  $('sheet_sm').style.display='none';
+  renderSM();
+});
+
+/* remove temp */
+function removeSM(idx){ SM_TEMP.splice(idx,1); renderSM(); }
+
+/* process SM (send each as API call and update DB) */
+async function processSM(){
+  if(!SM_TEMP.length) return alert('Tidak ada barang untuk diproses');
+  try{
+    for(const it of SM_TEMP){
+      const payload = { barang_id: it.barang_id, jumlah: it.jumlah, catatan: it.catatan };
+      const r = await apiFetch('/stok_masuk', { method:'POST', body: JSON.stringify(payload) });
+      if(!(r.json && r.json.ok)) { setDiag({ error:'failed stok_masuk', detail:r }); return; }
+    }
+    alert('Stock masuk berhasil diproses'); SM_TEMP = []; renderSM(); await fetchBarang();
+  } catch(e){ setDiag({error:String(e)}); }
+}
+/* attach processing button near top when list exists */
+const proBtn = document.createElement('button'); proBtn.className='btn'; proBtn.textContent='Proses Semua'; proBtn.onclick = processSM;
+document.body.appendChild(proBtn); proBtn.style.display='none'; proBtn.style.position='fixed'; proBtn.style.left='16px'; proBtn.style.bottom='140px'; proBtn.style.zIndex=1000;
+const obsSM = new MutationObserver(()=>{ proBtn.style.display = SM_TEMP.length ? 'block' : 'none'; });
+obsSM.observe($('sm_list'), { childList:true, subtree:true });
+
+/* ---------- Penjualan page ---------- */
+async function loadPenjualan(){
+  await fetchBarang();
+  renderPenjualan();
+}
+function renderPenjualan(){
+  const box = $('jual_list'); box.innerHTML='';
+  BARANG_CACHE.forEach(b=>{
+    const div = document.createElement('div'); div.className='item';
+    div.innerHTML = `<div style="width:64px" class="thumb">${b.foto ? '' : '📦'}</div><div class="meta"><h4>${escape(b.nama)}</h4><p>Stok: ${b.stock}</p></div>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <button class="btn" onclick="openJual(${b.id})">JUAL</button>
+      </div>`;
+    box.appendChild(div);
   });
 }
-</script>
+function openJual(id){
+  const b = BARANG_CACHE.find(x=>x.id==id);
+  const qty = prompt(`Jual berapa? (stok: ${b.stock})`, "1");
+  const jumlah = Number(qty || 0);
+  if(!jumlah || jumlah<=0) return;
+  // send stok_keluar
+  apiFetch('/stok_keluar', { method:'POST', body: JSON.stringify({ barang_id:id, jumlah, catatan:'jual via tester' }) })
+    .then(r=>{
+      if(r.json && r.json.ok) { alert('Penjualan tersimpan'); fetchBarang(); } else { setDiag(r); }
+    }).catch(e=> setDiag({error:String(e)}));
+}
 
+/* ---------- More page ---------- */
+$('more_get').addEventListener('click', fetchMore);
+$('more_save').addEventListener('click', async ()=>{
+  const payload = { custom_message: $('more_custom').value, sticky_message: $('more_sticky').value, welcome_image_url: $('more_welcome').value };
+  try {
+    const r = await apiFetch('/more', { method:'PUT', body: JSON.stringify(payload) });
+    if(r.json && r.json.ok) { alert('Saved More'); fetchMore(); } else setDiag(r);
+  } catch(e){ setDiag({error:String(e)}); }
+});
+
+/* ---------- Riwayat ---------- */
+function renderRiwayat(list){
+  const box = $('riwayat_box'); box.innerHTML='';
+  list.forEach(r=>{
+    const div = document.createElement('div'); div.className='item';
+    div.innerHTML = `<div class="meta"><h4>${escape(r.tipe)}</h4><p>${escape(r.barang_nama||'')} • ${r.jumlah} — oleh ${escape(r.dibuat_oleh||'')}</p><p class="small">${escape(r.created_at||'')}</p></div>`;
+    box.appendChild(div);
+  });
+}
+
+/* ---------- utility ---------- */
+function escape(s){ return String(s||'').replace(/[&<>"']/g, c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c])); }
+function num(n){ return Number(n||0).toLocaleString('id-ID'); }
+
+setInterval(()=>{ $('versionTag').textContent = VERSION + ' • ' + new Date().toLocaleString(); }, 1000);
+
+/* ---------- load initial page state ---------- */
+initApp();
+
+/* ---------- expose some debug helpers to window for manual dev on console ---------- */
+window._BMT = { apiFetch, apiBase: ()=>API_BASE, setApiBase: (u)=>{ API_BASE = u; localStorage.setItem('BMT_API_BASE',u); $('apiBaseBadge').textContent = u; }, user: ()=>USER, fetchBarang, fetchMore, fetchRiwayat };
+</script>
 </body>
-</html>
+  </html>
