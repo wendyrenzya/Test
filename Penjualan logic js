@@ -1,0 +1,75 @@
+const API = "https://api.bigmotor.biz.id";
+
+let LIST = [];
+let SEL_ID = null;
+
+window.onload = loadBarang;
+
+async function loadBarang() {
+  const res = await fetch(API + "/barang");
+  const json = await res.json();
+
+  console.log("PENJUALAN BARANG:", json);
+
+  LIST = json.results;
+  render();
+}
+
+function render() {
+  jualSummary.innerHTML = "";
+
+  LIST.forEach(b => {
+    jualSummary.innerHTML += `
+      <div class="item" onclick="openJual(${b.id})">
+        <strong>${b.nama}</strong><br>
+        Stok: ${b.stock}
+      </div>
+    `;
+  });
+}
+
+function openJual(id) {
+  SEL_ID = id;
+  const b = LIST.find(x => x.id == id);
+
+  selectedBarangJual.innerText = b.nama;
+  jualForm.classList.remove("hidden");
+}
+
+btnCancelJual.onclick = () => {
+  jualForm.classList.add("hidden");
+};
+
+btnSaveJual.onclick = async () => {
+  const body = {
+    barang_id: SEL_ID,
+    jumlah: Number(qtyKeluar.value), // worker js sudah minus otomatis
+    harga: Number(hargaJual.value),
+    catatan: descKeluar.value,
+  };
+
+  console.log("PENJUALAN BODY:", body);
+
+  const res = await fetch(API + "/stok_keluar", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-User": getUser(),
+    },
+    body: JSON.stringify(body),
+  });
+
+  const json = await res.json();
+  console.log("PENJUALAN SAVE:", json);
+
+  if (!json.ok) return alert("Gagal: " + json.error);
+
+  alert("Berhasil");
+  location.reload();
+};
+
+function getUser() {
+  const u = localStorage.getItem("bmt_user");
+  if (!u) return "";
+  return JSON.parse(u).username;
+}
