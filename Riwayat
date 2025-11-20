@@ -1,0 +1,12 @@
+PAGE: RIWAYAT TRANSAKSI
+
+Menampilkan:
+- Foto user
+- Nama user
+- Jenis transaksi (stok masuk, stok keluar, edit barang, tambah barang)
+- Tanggal & waktu
+- Barang terkait
+- Deskripsi
+
+API:
+GET /riwayat
