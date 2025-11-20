@@ -1,0 +1,49 @@
+<!-- BARANG LIST -->
+<div class="barang-header">
+  <h2>Data Barang</h2>
+  <input type="text" id="searchBarang" placeholder="Cari barang...">
+  <button id="btnAddBarang">+ Tambah Barang</button>
+</div>
+
+<div id="barangList"></div>
+
+<!-- ADD / EDIT FORM -->
+<div id="barangForm" class="hidden">
+  <h3 id="formTitle">Tambah Barang</h3>
+
+  <label>Nama Barang</label>
+  <input id="namaBarang">
+
+  <label>Harga Jual</label>
+  <input id="hargaBarang" type="number">
+
+  <label>Harga Modal</label>
+  <input id="hargaModal" type="number">
+
+  <label>Kategori</label>
+  <input id="kategoriBarang">
+
+  <label>Deskripsi (Opsional)</label>
+  <textarea id="deskripsiBarang"></textarea>
+
+  <label>Foto (Opsional)</label>
+  <input type="text" id="fotoBarang" placeholder="URL gambar">
+
+  <button id="btnFetchImage">Cari Gambar Otomatis</button>
+
+  <div id="fetchResult"></div>
+
+  <button id="btnSaveBarang">Simpan</button>
+  <button id="btnCancelBarang">Batal</button>
+</div>
+
+<style>
+#barangList .item{
+  background:#fff;padding:12px;margin:10px;
+  border-radius:10px;box-shadow:0 2px 3px rgba(0,0,0,.1);
+}
+.hidden{display:none;}
+#fetchResult img{
+  width:90px;height:90px;object-fit:cover;margin:5px;border-radius:4px;
+}
+</style>
