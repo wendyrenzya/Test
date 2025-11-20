@@ -1,0 +1,25 @@
+PAGE: STOK MASUK
+
+Flow:
+1. User pilih barang di summary page
+2. Masukkan qty + harga modal
+3. Tambah deskripsi (opsional)
+4. Simpan → stok barang otomatis bertambah
+
+UI:
+- Summary list barang (bukan list penuh)
+- Setelah pilih → tampilkan form input stok masuk
+
+Fields:
+- barang_id
+- qty
+- harga_modal
+- deskripsi (opsional)
+- created_by
+
+API:
+GET /barang/summary
+POST /stock-masuk/add
+
+Catatan:
+- Role Mekanik bisa akses tetapi tidak bisa edit record
