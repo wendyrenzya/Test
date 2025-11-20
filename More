@@ -1,0 +1,24 @@
+PAGE: MORE
+
+Menu:
+- Edit Custom Message
+- Edit Sticky Message
+- Update Floating Image
+- Profil Tim
+
+Role yang bisa akses:
+- Owner
+- Admin (kecuali floating image)
+- Mekanik tidak bisa
+
+Profil Tim:
+Tampilkan list user:
+• Nama
+• Username
+• Role
+• Foto kecil
+
+API:
+GET /messages
+GET /users
+POST /messages/update
