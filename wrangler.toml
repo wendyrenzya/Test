@@ -1,0 +1,18 @@
+# ========================
+# File: wrangler.toml
+# Place: project root
+# NOTE: do NOT commit real secrets. Set IMG_BB_KEY as CF secret or var.
+# ========================
+name = "bmt-api-worker"
+main = "worker.js"
+compatibility_date = "2025-01-01"
+account_id = "7e8d54f47827fb92fbbf2251fff1338b"
+
+[[d1_databases]]
+binding = "BMT_DB"
+database_id = "969fef5e-d7a3-4f58-979b-dbef1f085580"
+database_name = "bmt_db"
+
+[vars]
+# Put actual key in Cloudflare Dashboard worker variables or as secret.
+IMG_BB_KEY = "REPLACE_WITH_IMGBB_KEY_OR_SET_AS_SECRET"
